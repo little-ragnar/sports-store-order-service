@@ -1,0 +1,4 @@
+flask>=2.3
+prometheus_client>=0.17
+pytest>=7.0
+gunicorn>=20.1

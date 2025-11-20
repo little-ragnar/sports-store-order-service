@@ -1,0 +1,22 @@
+{{- if .Values.prometheusScrape.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "sports-store-app.fullname" . }}
+  labels:
+    release: monitoring
+{{- with .Values.prometheusScrape.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "sports-store-app.selectorLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: {{ .Values.prometheusScrape.path }}
+      interval: 15s
+{{- end }}

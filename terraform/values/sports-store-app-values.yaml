@@ -1,0 +1,21 @@
+# Example overrides for the sports-store-app Helm chart
+
+replicaCount: 1
+
+env:
+  ENVIRONMENT: "minikube"
+  FAILURE_RATE: 0.0
+  SIMULATED_LATENCY_SECONDS: 0.0
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "250m"
+    memory: "128Mi"
+
+prometheusScrape:
+  enabled: true
+  path: /metrics
+  port: 8000
