@@ -2,6 +2,11 @@
 
 replicaCount: 1
 
+image:
+  repository: little-ragnar/sports-store-order-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
 env:
   ENVIRONMENT: "minikube"
   FAILURE_RATE: 0.0

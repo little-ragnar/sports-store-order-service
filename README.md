@@ -1,13 +1,13 @@
 # Sports Store Order Service
 
-This repository contains a simple **order service** for a fictional sports store.  It is built with **Python** and **Flask** and exposes business and system metrics via the Prometheus client library.  The project is containerised with Docker, packaged with **Helm** for deployment on Kubernetes, managed with **Terraform** and includes a basic GitHub Actions workflow for continuous integration and delivery.
+This repository contains a simple **order service** for a sports store.  It is built with **Python** and **Flask** and exposes business and system metrics via the Prometheus client library.  The project is containerised with Docker, packaged with **Helm** for deployment on Kubernetes, managed with **Terraform** and includes a basic GitHub Actions workflow for continuous integration and delivery.
 
 ## Features
 
 - **RESTful API** – create and retrieve orders for sporting goods and view a catalogue of products.
 - **Prometheus metrics** – business metrics (orders created, total amount, orders by category), request counters and histograms, and artificial error and latency simulations.
 - **Health checks** – readiness and liveness endpoints to integrate with Kubernetes probes.
-- **Containerised** – multi‑architecture Docker image (amd64 and arm64) that runs on your Mac M1 via Colima.
+- **Containerised** – Docker image (arm64) that runs on your Mac.
 - **Helm chart** – templated Kubernetes manifests for the application with optional ServiceMonitor for Prometheus scraping.
 - **Infrastructure as Code** – sample Terraform configuration demonstrating how to install the Helm chart and manage it declaratively.
 - **CI/CD pipeline** – GitHub Actions workflow to run tests, build and push the Docker image and publish it to GitHub Container Registry.
@@ -53,11 +53,12 @@ The repository is organised as follows:
 To run this project locally you will need:
 
 * **Python 3.11** – for development and unit testing.
-* **Docker** – container engine.  On macOS with M1 chips we recommend using **Colima** as an alternative to Docker Desktop.
+* **Docker** – container engine.  On macOS with M1 chips I used **Colima** as an alternative to Docker Desktop.
 * **Minikube** – local Kubernetes cluster.  Use the `docker` driver and ensure Colima is running before starting Minikube.
 * **Helm 3** – package manager for Kubernetes.
 * **Terraform 1.5+** – optional: manage the Helm release declaratively.
-* An SMTP account (e.g. Outlook) – for Alertmanager notifications (configured later).
+* An SMTP account (e.g. Outlook) – for Alertmanager notifications (Still debugging an apparent SMTP error but run out of time).
+
 
 ## Quick start
 
@@ -97,10 +98,11 @@ Ensure Colima is running (`colima start`) then build and run the container:
 
 ```sh
 # Build the multi‑arch image (amd64 and arm64)
-docker buildx build --platform linux/amd64,linux/arm64 -t your‑user/sports-store-order-service:latest .
+docker buildx build --platform linux/arm64 -t little-ragnar/sports-store-order-service:latest --load .
+
 
 # Run locally exposing port 8000
-docker run --rm -p 8000:8000 your‑user/sports-store-order-service:latest
+docker run --rm -p 8000:8000 little_ragnar/sports-store-order-service:latest
 ```
 
 ### 4. Deploy to Minikube with Helm
@@ -119,23 +121,17 @@ docker run --rm -p 8000:8000 your‑user/sports-store-order-service:latest
     helm repo update
     ```
 
-3. (Optional) Install the **kube-prometheus-stack** chart to deploy Prometheus, Grafana and Alertmanager:
+3. Install the **kube-prometheus-stack** chart to deploy Prometheus, Grafana and Alertmanager:
 
     ```sh
-    helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace \
-      --set prometheus.prometheusSpec.retention="2d" \
-      --set grafana.enabled=true \
-      --set alertmanager.enabled=true
+    helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace --set prometheus.prometheusSpec.retention="2d" --set grafana.enabled=true --set alertmanager.enabled=true
     ```
 
 4. Package and install this service’s Helm chart:
 
     ```sh
     # from the project root
-    helm dependency update charts/sports-store-app
-    helm install sports-store-app charts/sports-store-app -n sports-store --create-namespace \
-      --set image.repository=your‑user/sports-store-order-service \
-      --set image.tag=latest
+    helm dependency update charts/sports-store-app && helm install sports-store-app charts/sports-store-app -n sports-store --create-namespace --set image.repository=little-ragnar/sports-store-order-service --set image.tag=latest
     ```
 
 5. Verify the deployment:
@@ -157,17 +153,21 @@ terraform init
 terraform apply
 ```
 
-## Configuring Alertmanager and Outlook notifications
+## Configuring Alertmanager and Outlook notifications (Esta al 90%, me encontre un smtp error que no he podido arreglar, pero pasos sencillos son estos)
 
-If you installed the kube-prometheus-stack, Alertmanager is included.  To configure e‑mail notifications via Outlook:
+If you installed the kube-prometheus-stack, Alertmanager is included.  To configure e‑mail notifications via Outlook (I created a test email):
+
+Credentials:
+Email - 'sre-ibm-test@outlook.com'
+password - 'SreAc@d3my.2025'
 
 1. Obtain SMTP credentials for your Outlook account (e.g. app password, SMTP host, port and TLS settings).
 2. Create a Kubernetes secret containing the credentials in the `monitoring` namespace:
 
     ```sh
     kubectl create secret generic alertmanager-outlook-secret -n monitoring \
-      --from-literal=smtp_username="your@email.com" \
-      --from-literal=smtp_password="your-app-password"
+      --from-literal=smtp_username="sre-ibm-test@outlook.com" \
+      --from-literal=smtp_password="SreAc@d3my.2025"
     ```
 
 3. Patch the Alertmanager configuration (using Helm or `kubectl`) to reference the secret and configure the receiver.  See the Prometheus Operator documentation for details.

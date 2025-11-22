@@ -1,0 +1,30 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: sports-store-rules
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: sports-store.rules
+      rules:
+        - alert: SportsStoreHighErrorRate
+          expr: sum(rate(http_requests_total{namespace="sports-store", http_status="500"}[5m])) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            service: sports-store-app
+          annotations:
+            summary: "High 5xx error rate in Sports Store app"
+            description: "Sports Store app is returning many 500 errors over the last 5 minutes."
+
+        - alert: SportsStoreHighLatencyP99
+          expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace="sports-store"}[5m])) by (le)) > 2
+          for: 5m
+          labels:
+            severity: warning
+            service: sports-store-app
+          annotations:
+            summary: "High p99 latency in Sports Store app"
+            description: "p99 latency is above 2 seconds for the last 5 minutes."

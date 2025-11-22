@@ -1,0 +1,23 @@
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+      smtp_smarthost: 'smtp-mail.outlook.com:587'
+      smtp_from: 'sre-ibm-test@outlook.com'
+      smtp_auth_username: 'sre-ibm-test@outlook.com'
+      smtp_auth_password: 'SreAc@d3my.2025'
+      smtp_require_tls: true
+
+    route:
+      receiver: 'outlook'
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 2h
+
+    receivers:
+      - name: 'null'        # para el watchdog por defecto
+      - name: 'outlook'
+        email_configs:
+          - to: 'sre-ibm-test@outlook.com'
+            send_resolved: true

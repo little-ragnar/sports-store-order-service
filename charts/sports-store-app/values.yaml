@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: sports-store-order-service
+  repository: little-ragnar/sports-store-order-service
   pullPolicy: IfNotPresent
   tag: "latest"
 
